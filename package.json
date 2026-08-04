@@ -1,0 +1,20 @@
+{
+  "name": "thanh-huong-sanxuat",
+  "version": "1.0.0",
+  "description": "Mini App Telegram điều phối sản xuất theo ưu tiên - Nhà máy Xay xát Gạo Thạnh Hương",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node test-scheduler.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "node-telegram-bot-api": "^0.66.0"
+  },
+  "author": "Cty TNHH TM DV XNK Thành Hưng",
+  "license": "UNLICENSED"
+}
