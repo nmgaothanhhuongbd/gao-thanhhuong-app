@@ -27,8 +27,6 @@ const WEBAPP_URL = process.env.WEBAPP_URL || '';
 const ADMIN_IDS = (process.env.ADMIN_IDS || '').split(',').map((s) => s.trim()).filter(Boolean);
 const DEV = !TOKEN || process.env.ALLOW_INSECURE === '1';
 
-store.load();
-
 // ---- Bot + Notifier ----
 let bot = null;
 if (TOKEN) {
@@ -84,6 +82,7 @@ function stateResponse(req) {
     company: db.company,
     settings: db.settings,
     riceTypes: db.riceTypes,
+    inventory: db.inventory || {},
     machineCurrentType: db.machineCurrentType,
     scheduleStart: db.scheduleStart,
     orders: db.orders,
@@ -201,7 +200,32 @@ app.post('/api/progress', auth, requireAdmin, async (req, res) => {
   });
   if (b.scheduleStart) db.scheduleStart = b.scheduleStart;
   store.save(db);
-  const schedule = await commitAndNotify(req, b.reason || 'Cập nhật tiến độ sản xuất');
+  // silent = cập nhật tiến độ nhanh, KHÔNG gửi thông báo (tránh làm phiền cả nhóm).
+  let schedule;
+  if (b.silent) {
+    store.renumber(db);
+    store.save(db);
+    schedule = Scheduler.computeSchedule(db);
+  } else {
+    schedule = await commitAndNotify(req, b.reason || 'Cập nhật tiến độ sản xuất');
+  }
+  res.json({ ok: true, schedule });
+});
+
+// Cập nhật hàng tồn kho theo loại gạo: body { inventory: { "Gạo ải": 5, ... }, silent? }
+app.put('/api/inventory', auth, requireAdmin, async (req, res) => {
+  const db = store.getDb();
+  const inv = (req.body && req.body.inventory) || {};
+  const clean = {};
+  Object.keys(inv).forEach((k) => { const v = Number(inv[k]); if (k && v > 0) clean[k] = v; });
+  db.inventory = clean;
+  store.save(db);
+  let schedule;
+  if (req.body && req.body.silent) {
+    schedule = Scheduler.computeSchedule(db);
+  } else {
+    schedule = await commitAndNotify(req, 'Cập nhật hàng tồn kho thành phẩm');
+  }
   res.json({ ok: true, schedule });
 });
 
@@ -227,7 +251,17 @@ app.post('/api/broadcast', auth, requireAdmin, async (req, res) => {
 
 app.get('/api/health', (req, res) => res.json({ ok: true, dev: DEV, hasBot: !!bot }));
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server chạy tại http://localhost:${PORT}  (DEV=${DEV})`);
-  if (WEBAPP_URL) console.log('   WEBAPP_URL =', WEBAPP_URL);
-});
+function startServer() {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server chạy tại http://localhost:${PORT}  (DEV=${DEV})`);
+    if (WEBAPP_URL) console.log('   WEBAPP_URL =', WEBAPP_URL);
+  });
+}
+
+// Khởi tạo kho dữ liệu (Firestore nếu có cấu hình, không thì file) rồi mới chạy server.
+store.init()
+  .then(startServer)
+  .catch((e) => {
+    console.error('Khởi tạo lưu trữ lỗi, chạy tạm bằng file:', e.message);
+    startServer();
+  });

@@ -172,3 +172,20 @@ Muốn đổi ca, năng suất, thời gian chuyển đổi: vào tab **⚙️ C
 - Chỉ Telegram id trong `ADMIN_IDS` hoặc vai trò *Giám đốc / Tổ sản xuất* mới sửa được dữ liệu.
 - Mọi yêu cầu sửa đều được xác thực chữ ký `initData` của Telegram ở phía máy chủ.
 - **Không** đặt `ALLOW_INSECURE=1` khi chạy thật.
+
+---
+
+## 12. Lưu dữ liệu BỀN bằng Google Firestore (miễn phí)
+
+Render Free xoá ổ đĩa mỗi lần deploy nên dữ liệu file sẽ mất. Cấu hình Firestore để lưu bền:
+
+1. Vào https://console.firebase.google.com (đăng nhập Google) → **Add project** → đặt tên → tạo (tắt Analytics cho gọn).
+2. Menu trái **Build → Firestore Database** → **Create database** → chọn **Production mode** → vùng gần (asia-southeast1).
+3. Vào **Project settings (⚙️) → Service accounts** → **Generate new private key** → tải về file JSON.
+4. Trên Render, mở service → **Environment** → **Add Environment Variable**:
+   - Key: `FIREBASE_SERVICE_ACCOUNT`
+   - Value: dán **toàn bộ nội dung** file JSON vừa tải (mở bằng Notepad, copy hết).
+   - **Save changes** → Render deploy lại.
+5. Xem **Logs**, thấy dòng `💾 Lưu trữ: Google Firestore (bền lâu).` là xong — dữ liệu giờ không mất khi deploy/ngủ dậy.
+
+Không có biến này thì app vẫn chạy nhưng lưu file (mất khi Render Free restart).

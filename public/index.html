@@ -13,101 +13,72 @@
       <span class="logo">🏭</span>
       <div>
         <div class="brand-title">Điều phối sản xuất</div>
-        <div class="brand-sub">Nhà máy Xay xát Gạo Thạnh Hương</div>
+        <div class="brand-sub">Gạo Thạnh Hương</div>
       </div>
     </div>
     <div id="whoami" class="whoami">…</div>
   </header>
 
-  <div class="statusbar">
-    <div class="status-item">
-      <label>Loại gạo đang chạy</label>
-      <select id="machineType" class="admin-only"></select>
-      <span id="machineTypeRO" class="ro-value"></span>
+  <!-- Thanh trạng thái + nút, gọn trên 1 màn -->
+  <div class="topbar">
+    <div class="chips">
+      <div class="chip">
+        <span class="chip-label">Đang chạy</span>
+        <select id="machineType" class="admin-only"></select>
+        <span id="machineTypeRO" class="ro-value"></span>
+      </div>
+      <div class="chip">
+        <span class="chip-label">Bắt đầu tính</span>
+        <input type="datetime-local" id="scheduleStart" class="admin-only" />
+        <span id="scheduleStartRO" class="ro-value"></span>
+      </div>
+      <div class="chip">
+        <span class="chip-label">Tăng ca</span>
+        <span id="overtimeBadge" class="badge">—</span>
+      </div>
     </div>
-    <div class="status-item">
-      <label>Bắt đầu tính từ</label>
-      <input type="datetime-local" id="scheduleStart" class="admin-only" />
-      <span id="scheduleStartRO" class="ro-value"></span>
-    </div>
-    <div class="status-item">
-      <label>Tăng ca (16:30–17:30)</label>
-      <span id="overtimeBadge" class="badge">—</span>
+    <div class="actions">
+      <button id="btnAdd" class="btn btn-primary admin-only">＋ Thêm đơn</button>
+      <button id="btnInv" class="btn admin-only">📦 Tồn kho</button>
+      <button id="btnSettings" class="btn admin-only">⚙️ Năng suất/Ca</button>
+      <button id="btnBroadcast" class="btn btn-ghost admin-only">📣 Gửi thông báo</button>
     </div>
   </div>
 
-  <nav class="tabs">
-    <button class="tab active" data-tab="orders">📋 Đơn hàng</button>
-    <button class="tab" data-tab="changes">🔄 Chuyển đổi</button>
-    <button class="tab" data-tab="history">🕘 Lịch sử</button>
-    <button class="tab" data-tab="settings">⚙️ Cấu hình</button>
-  </nav>
-
   <main>
-    <!-- TAB: ĐƠN HÀNG -->
-    <section id="tab-orders" class="tab-panel active">
-      <div class="toolbar admin-only">
-        <button id="btnAdd" class="btn btn-primary">＋ Thêm đơn</button>
-        <button id="btnProgress" class="btn">📥 Cập nhật tiến độ</button>
-        <button id="btnBroadcast" class="btn btn-ghost">📣 Gửi thông báo</button>
-      </div>
-      <div id="ordersList" class="orders"></div>
-      <p id="readonlyNote" class="readonly-note" style="display:none">
-        Bạn đang ở chế độ <b>chỉ xem</b>. Chỉ Giám đốc / Tổ sản xuất mới điều chỉnh được.
-      </p>
-    </section>
+    <table class="orders-table">
+      <thead>
+        <tr>
+          <th class="c-stt">STT</th>
+          <th class="c-cus">Khách hàng</th>
+          <th class="c-item">Mặt hàng &amp; số lượng</th>
+          <th class="c-prog">Tiến độ sản xuất</th>
+        </tr>
+      </thead>
+      <tbody id="ordersBody"></tbody>
+    </table>
 
-    <!-- TAB: CHUYỂN ĐỔI -->
-    <section id="tab-changes" class="tab-panel">
-      <div class="card summary">
-        <div>Tổng thời gian chuyển đổi loại gạo cộng thêm:</div>
-        <div id="totalChange" class="big-number">—</div>
-      </div>
-      <div id="changeEvents" class="events"></div>
-    </section>
+    <p id="readonlyNote" class="readonly-note" style="display:none">
+      Bạn đang ở chế độ <b>chỉ xem</b>. Chỉ Giám đốc / Tổ sản xuất mới điều chỉnh được.
+    </p>
 
-    <!-- TAB: LỊCH SỬ -->
-    <section id="tab-history" class="tab-panel">
-      <div id="historyList" class="events"></div>
-    </section>
-
-    <!-- TAB: CẤU HÌNH -->
-    <section id="tab-settings" class="tab-panel">
-      <div class="card">
-        <h3>Năng suất (tấn thành phẩm / giờ)</h3>
-        <div class="row">
-          <label>Thấp nhất <input type="number" step="0.1" id="rateMin" /></label>
-          <label>Cao nhất <input type="number" step="0.1" id="rateMax" /></label>
-        </div>
-        <h3>Thời gian chuyển đổi loại gạo (phút)</h3>
-        <div class="row">
-          <label>Tối thiểu <input type="number" id="changeoverMin" /></label>
-          <label>Tối đa <input type="number" id="changeoverMax" /></label>
-        </div>
-        <h3>Ca sản xuất</h3>
-        <div class="row">
-          <label>Sáng từ <input type="time" id="w1s" /></label>
-          <label>đến <input type="time" id="w1e" /></label>
-        </div>
-        <div class="row">
-          <label>Chiều từ <input type="time" id="w2s" /></label>
-          <label>đến <input type="time" id="w2e" /></label>
-        </div>
-        <div class="row">
-          <label class="check"><input type="checkbox" id="otEnabled" /> Luôn bật tăng ca</label>
-          <label>TC từ <input type="time" id="ots" /></label>
-          <label>đến <input type="time" id="ote" /></label>
-        </div>
-        <button id="btnSaveSettings" class="btn btn-primary admin-only">💾 Lưu cấu hình</button>
+    <details class="accordion">
+      <summary>🔄 Chuyển đổi loại gạo &nbsp;·&nbsp; 🕘 Lịch sử điều chỉnh</summary>
+      <div class="acc-body">
+        <div class="mini-summary">Tổng thời gian chuyển đổi cộng thêm:
+          <b id="totalChange">—</b></div>
+        <div id="changeEvents" class="events"></div>
+        <h4>Lịch sử điều chỉnh</h4>
+        <div id="historyList" class="events"></div>
       </div>
-    </section>
+    </details>
   </main>
 
-  <!-- MODAL -->
+  <!-- Modal dùng chung -->
   <div id="modal" class="modal-backdrop" style="display:none">
     <div class="modal">
       <div class="modal-head">
-        <span id="modalTitle">Đơn hàng</span>
+        <span id="modalTitle">—</span>
         <button id="modalClose" class="icon-btn">✕</button>
       </div>
       <div id="modalBody" class="modal-body"></div>
@@ -119,7 +90,6 @@
   </div>
 
   <div id="toast" class="toast"></div>
-
   <script src="app.js"></script>
 </body>
 </html>
